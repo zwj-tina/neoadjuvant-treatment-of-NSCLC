@@ -1,0 +1,468 @@
+```{r}
+# do not use renv or any project lib here
+
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+
+# note this has ICI+chemo patients, and chemo-only patients
+metadata.lusc.luad.no.egfr.alk <- read_csv("clean_metadata_all_surgical_sample_lusc_luad_only_excluded_egfr_alk.csv")
+
+nrow(metadata.lusc.luad.no.egfr.alk)
+
+metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo <- metadata.lusc.luad.no.egfr.alk %>% filter(PD1!="No")
+metadata.lusc.luad.no.egfr.alk.chemo.only <- metadata.lusc.luad.no.egfr.alk %>% filter(PD1=="No")
+
+# use this as the standard number of all followed patients with ICI+chemo
+nrow(metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo)
+
+# use this as the standard number of all followed patients with chemo-only
+nrow(metadata.lusc.luad.no.egfr.alk.chemo.only)
+
+confidence.interval <- function(proportion, n){
+  return(proportion + c(-1,1) * qnorm(1-0.05/2) * sqrt(proportion*(1-proportion)/n))
+}
+```
+
+
+## ICI+chemo
+```{r}
+# --------------------------- overall response waterfall plot -----------------------
+overall.RVT.plot.immunotherapy.lusc.and.luad <- ggbarplot(
+  metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+    filter(is.na(RVT) == F), # note, some patients has no specific value of RVT, so has to filter out for successful RVT plot.
+  "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.immunotherapy.lusc.and.luad
+
+ggsave("plots/overall.RVT.plot.immunotherapy.lusc.and.luad.pdf", overall.RVT.plot.immunotherapy.lusc.and.luad, width = 12, height = 5)
+```
+```{r}
+metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo
+```
+
+
+
+```{r}
+# calculate MPR & pCR rate in the ICI+chemo group, not distinguishing histology
+# do not use the "isMPR" since it is derived from RVT, minor inconsistency.)  
+
+MPR.pCR.Rate.ICI.plus.chemo <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR")) %>% # filter patients without pathological response info
+  count(`Pathological Response`) %>%
+  summarise(
+    pCR_rate = sum(n[`Pathological Response` == "pCR"])/sum(n) * 100, 
+    MPR_rate = sum(n[`Pathological Response` %in% c("MPR", "pCR")])/sum(n) * 100) 
+
+MPR.pCR.Rate.ICI.plus.chemo
+
+N.sample <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR"))
+N.sample <- nrow(N.sample)
+MPR.confidence.interval <- confidence.interval(MPR.pCR.Rate.ICI.plus.chemo$MPR_rate*0.01, N.sample)
+MPR.confidence.interval
+pCR.confidence.interval <- confidence.interval(MPR.pCR.Rate.ICI.plus.chemo$pCR_rate*0.01, N.sample)
+pCR.confidence.interval
+```
+
+
+```{r}
+# calculate by.LUSC/LUAD MPR.pCR rates
+
+by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR")) %>% # filter patients without pathological response info
+  count(`Pathological Response`, pathology) %>% 
+  group_by(pathology) %>% 
+  summarise(
+    pCR_rate = sum(n[`Pathological Response` == "pCR"])/sum(n) * 100, 
+    MPR_rate = sum(n[`Pathological Response` %in% c("MPR", "pCR")])/sum(n) * 100) %>%
+  mutate(pathology = factor(pathology, levels = c("LUSC", "LUAD")))
+
+N.LUSC.LUAD <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% group_by(pathology) %>% count()
+N.LUSC.LUAD
+by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo
+
+
+# calculate by.LUSC/LUAD pPR rates
+
+by.LUSC.LUAD.MPR.pPR.Rate.ICI.plus.chemo <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+  filter(response %in% c("MPR", "pPR", "nPR", "pCR")) %>% # filter patients without pathological response info
+  count(response, pathology) %>% 
+  group_by(pathology) %>% 
+  summarise(
+    pPR_rate = sum(n[response == "pPR"])/sum(n) * 100) %>%
+  mutate(pathology = factor(pathology, levels = c("LUSC", "LUAD")))
+
+by.LUSC.LUAD.MPR.pPR.Rate.ICI.plus.chemo
+
+
+##====LUSC 
+N.sample <- N.LUSC.LUAD %>% filter(pathology=="LUSC")
+N.sample <- N.sample$n
+temp.table <- by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo %>% filter(pathology=="LUSC")
+MPR.confidence.interval <- confidence.interval(temp.table$MPR_rate*0.01, N.sample)
+MPR.confidence.interval
+pCR.confidence.interval <- confidence.interval(temp.table$pCR_rate*0.01, N.sample)
+pCR.confidence.interval
+
+##====LUAD
+N.sample <- N.LUSC.LUAD %>% filter(pathology=="LUAD")
+N.sample <- N.sample$n
+temp.table <- by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo %>% filter(pathology=="LUAD")
+MPR.confidence.interval <- confidence.interval(temp.table$MPR_rate*0.01, N.sample)
+MPR.confidence.interval
+pCR.confidence.interval <- confidence.interval(temp.table$pCR_rate*0.01, N.sample)
+pCR.confidence.interval
+```
+
+
+```{r}
+# calculate by.LUSC/LUAD MPR.pCR rates
+
+by.LUSC.LUAD.sub.by.cycles.MPR.pCR.Rate.ICI.plus.chemo <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR"),
+         Cycles %in% c(2, 3, 4)) %>% # filter patients without pathological response info
+  count(`Pathological Response`, pathology, Cycles) %>% 
+  group_by(pathology, Cycles) %>% 
+  summarise(
+    pCR_rate = sum(n[`Pathological Response` == "pCR"])/sum(n) * 100, 
+    MPR_rate = sum(n[`Pathological Response` %in% c("MPR", "pCR")])/sum(n) * 100) %>%
+  mutate(pathology = factor(pathology, levels = c("LUSC", "LUAD")))
+
+by.LUSC.LUAD.sub.by.cycles.MPR.pCR.Rate.ICI.plus.chemo
+```
+
+
+```{r}
+#===== MPR & pCR rate difference plot ICI.plus.chemo
+
+p_pCR <- ggbarplot(by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo, "pathology", "pCR_rate",
+    palette = c("LUSC"="#50B8C3", "LUAD"="#EDAE7B"),
+    fill = "pathology",
+    xlab = FALSE,
+    ylab = "pCR rate(%)",
+    label = T,
+    legend = "none",
+    lab.nb.digits = 1,
+    lab.size = 6,
+    font.y = 20, 
+    font.tickslab = 15,
+) +
+  geom_bracket(
+    xmin = "LUSC", xmax = "LUAD", y.position = 60,
+    label = "Difference = 25.0%", label.size = 6, tip.length = c(0.2, 0.9)
+  ) +
+  ylim(0,100)
+
+p_pCR
+ggsave("plots/pCR_difference_between_LUSC_LUAD.pdf", width = 4.5, height = 8)
+
+#==== calculate chi-square 
+temp.table <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo
+temp.table[temp.table=="MPR"] <- "non-PCR"
+temp.table[temp.table=="non-MPR"] <- "non-PCR"
+temp.table <- table(temp.table$pathology,temp.table$`Pathological Response`)
+temp.table
+chisq.test(temp.table)
+
+
+
+#============
+
+p_MPR <- ggbarplot(by.LUSC.LUAD.MPR.pCR.Rate.ICI.plus.chemo, "pathology", "MPR_rate",
+                   palette = c("LUSC"="#50B8C3", "LUAD"="#EDAE7B"),
+                   fill = "pathology",
+    xlab = FALSE,
+    ylab = "MPR rate(%)",
+    label = T,
+    legend = "none",
+    lab.nb.digits = 1,
+    lab.size = 6,
+    font.y = 20, 
+    font.tickslab = 15,
+) +
+  geom_bracket(
+    xmin = "LUSC", xmax = "LUAD", y.position = 75,
+    label = "Difference = 25.9%", label.size = 6, tip.length = c(0.2, 0.9)
+  ) + ylim(0,100)
+p_MPR
+ggsave("plots/MPR_difference_between_LUSC_LUAD.pdf", width = 4.5, height = 8)
+
+#==== calculate chi-square 
+temp.table <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo
+temp.table[temp.table=="pCR"] <- "MPR"
+temp.table <- table(temp.table$pathology,temp.table$`Pathological Response`)
+chisq.test(temp.table)
+
+
+#============
+
+p_pPR <- ggbarplot(by.LUSC.LUAD.MPR.pPR.Rate.ICI.plus.chemo, "pathology", "pPR_rate",
+                   palette = c("LUSC"="#50B8C3", "LUAD"="#EDAE7B"),
+                   fill = "pathology",
+    xlab = FALSE,
+    ylab = "pPR rate(%)",
+    label = T,
+    legend = "none",
+    lab.nb.digits = 1,
+    lab.size = 6,
+    font.y = 20, 
+    font.tickslab = 15,
+) +
+  geom_bracket(
+    xmin = "LUSC", xmax = "LUAD", y.position = 75,
+    label = "Difference = 25.9%", label.size = 6, tip.length = c(0.2, 0.9)
+  ) + ylim(0,100)
+p_pPR
+ggsave("plots/pPR_difference_between_LUSC_LUAD.pdf", width = 4.5, height = 8)
+
+#==== calculate chi-square 
+temp.table <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% filter(response %in% c("MPR", "pPR", "nPR", "pCR"))
+temp.table[temp.table %in% c("pCR", "MPR", "nPR")] <- "non-pPR"
+temp.table <- table(temp.table$pathology,temp.table$`Pathological Response`)
+chisq.test(temp.table)
+
+#==== plot response percentage
+temp.table <- metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% filter(response %in% c("MPR", "pPR", "nPR", "pCR")) %>% count(response, pathology)
+temp.table$response <- factor(temp.table$response, levels = c("nPR", "pPR", "MPR", "pCR"))
+ggplot(temp.table, aes(fill=response, y=n, x=pathology)) + 
+    geom_bar(position="fill", stat="identity")
+
+
+
+```
+
+
+```{r}
+# --------------------------- LUSC response waterfall plot -----------------------
+overall.RVT.plot.immunotherapy.lusc<- ggbarplot(metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% filter(pathology == "LUSC", is.na(RVT) == F), "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.immunotherapy.lusc
+
+ggsave("plots/overall.RVT.plot.immunotherapy.lusc.pdf", overall.RVT.plot.immunotherapy.lusc, width = 12, height = 5)
+
+# --------------------------- luad response waterfall plot -----------------------
+overall.RVT.plot.immunotherapy.luad<- ggbarplot(metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% filter(pathology == "LUAD", is.na(RVT) == F), "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.immunotherapy.luad
+
+ggsave("plots/overall.RVT.plot.immunotherapy.luad.pdf", overall.RVT.plot.immunotherapy.luad, width = 12, height = 5)
+
+
+#=======
+metadata.lusc.luad.no.egfr.alk.ICI.plus.chemo %>% count(pathology)
+
+```
+
+
+## chemo 
+```{r}
+# --------------------------- chemo overall response waterfall plot -----------------------
+overall.RVT.plot.chemo.lusc.and.luad <- ggbarplot(
+  metadata.lusc.luad.no.egfr.alk.chemo.only %>% 
+    filter(is.na(RVT) == F), # note, some patients has no specific value of RVT, so has to filter out for successful RVT plot.
+  "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.chemo.lusc.and.luad
+
+ggsave("plots/overall.RVT.plot.chemo.lusc.and.luad.pdf", overall.RVT.plot.chemo.lusc.and.luad, width = 12, height = 5)
+```
+
+
+```{r}
+# calculate MPR & pCR rate in the chemo group, not distinguishing histology
+# do not use the "isMPR" since it is derived from RVT, minor inconsistency.)  
+
+MPR.pCR.Rate.chemo <- metadata.lusc.luad.no.egfr.alk.chemo.only %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR")) %>% # filter patients without pathological response info
+  count(`Pathological Response`) %>%
+  summarise(
+    pCR_rate = sum(n[`Pathological Response` == "pCR"])/sum(n) * 100, 
+    MPR_rate = sum(n[`Pathological Response` %in% c("MPR", "pCR")])/sum(n) * 100) 
+
+metadata.lusc.luad.no.egfr.alk.chemo.only %>% group_by(pathology) %>% count()
+MPR.pCR.Rate.chemo
+
+
+N.sample <- metadata.lusc.luad.no.egfr.alk.chemo.only %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR"))
+N.sample <- nrow(N.sample)
+MPR.confidence.interval <- confidence.interval(MPR.pCR.Rate.chemo$MPR_rate*0.01, N.sample)
+MPR.confidence.interval
+pCR.confidence.interval <- confidence.interval(MPR.pCR.Rate.chemo$pCR_rate*0.01, N.sample)
+pCR.confidence.interval
+```
+
+
+```{r}
+# calculate chemo by.LUSC/LUAD MPR.pCR rates
+
+by.LUSC.LUAD.MPR.pCR.Rate.chemo<- metadata.lusc.luad.no.egfr.alk.chemo.only %>% 
+  filter(`Pathological Response` %in% c("MPR", "non-MPR", "pCR")) %>% # filter patients without pathological response info
+  count(`Pathological Response`, pathology) %>% 
+  group_by(pathology) %>% 
+  summarise(
+    pCR_rate = sum(n[`Pathological Response` == "pCR"])/sum(n) * 100, 
+    MPR_rate = sum(n[`Pathological Response` %in% c("MPR", "pCR")])/sum(n) * 100) %>%
+  mutate(pathology = factor(pathology, levels = c("LUSC", "LUAD")))
+
+by.LUSC.LUAD.MPR.pCR.Rate.chemo
+```
+
+```{r}
+# --------------------------- LUSC response waterfall plot -----------------------
+overall.RVT.plot.chemo.lusc<- ggbarplot(metadata.lusc.luad.no.egfr.alk.chemo.only %>% filter(pathology == "LUSC", is.na(RVT) == F), "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.chemo.lusc
+
+ggsave("plots/overall.RVT.plot.chemo.lusc.pdf", overall.RVT.plot.chemo.lusc, width = 12, height = 5)
+
+
+
+# --------------------------- luad response waterfall plot -----------------------
+overall.RVT.plot.chemo.luad<- ggbarplot(metadata.lusc.luad.no.egfr.alk.chemo.only %>% filter(pathology == "LUAD", is.na(RVT) == F), "Tumor_Sample_Barcode", "RVT", 
+        sort.val = "desc", 
+        xlab = FALSE,
+        palette = c("#077E64", "#878586"),
+        color = "isMPR",
+        fill = "isMPR",
+        width = 0.6, 
+        sort.by.groups = F, 
+        # main = "All patients(n=240)",
+        font.y = 15, 
+        font.legend = 15, 
+        font.tickslab = 15) +
+    theme( 
+        legend.position = "right",
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_blank(), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +
+    ylab("Change in primary tumor area with\n viable tumor cells(%)") +
+    scale_y_continuous(
+        expand = c(0, 0),
+        breaks = c(0, -10, -20, -30, -40, -50, -60, -70, -80, -90, -100)
+    ) +
+    geom_hline(yintercept = -90, color = "black", size = 0.5, linetype = "dashed")
+
+overall.RVT.plot.chemo.luad
+
+ggsave("plots/overall.RVT.plot.chemo.luad.pdf", overall.RVT.plot.chemo.luad, width = 12, height = 5)
+
+
+#=======
+metadata.lusc.luad.no.egfr.alk.chemo.only %>% count(pathology)
+
+
+```
+
+
