@@ -1,0 +1,22 @@
+color.value <- c(
+  "expanded_terminal_Tex"="#004949",
+  "Expanded CCR8+Treg"="#A50021",
+  "other"="#BCBCBC",
+  "CD8Texp"="#418849"
+)
+
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P9")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P9")
+p
+ggsave("figures/P9_clonal_composition.pdf", p, width = 10, height =5)
