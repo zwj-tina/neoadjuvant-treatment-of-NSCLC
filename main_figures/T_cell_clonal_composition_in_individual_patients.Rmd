@@ -1,3 +1,17 @@
+# select expanded TCRs
+all.tcr.table <- read_csv("/home/zhangwj/data_yi/neoadjuvant/data/scRNA_h5ad_S/T_with_TCR_obs_V3.csv")
+all.tcr.table 
+
+unique.tcr <- unique(all.tcr.table$clonetype)
+tcr.frequency.table <- all.tcr.table %>% group_by(clonetype) %>% summarise(n=n())
+tcr.frequency.table
+TCRs.expansion.cutoff <- 10
+expanded.TCR.frequency.table <- tcr.frequency.table %>% filter(n>=TCRs.expansion.cutoff)
+expanded.TCR.frequency.table
+expanded.TCRs <- as.vector(expanded.TCR.frequency.table$clonetype)
+
+expanded.tcr.table <- all.tcr.table %>% filter(clonetype %in% expanded.TCRs)
+
 color.value <- c(
   "expanded_terminal_Tex"="#004949",
   "Expanded CCR8+Treg"="#A50021",
