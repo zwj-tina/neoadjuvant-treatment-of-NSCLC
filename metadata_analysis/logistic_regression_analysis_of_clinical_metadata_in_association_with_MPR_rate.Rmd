@@ -69,7 +69,6 @@ library("dplyr")
 library("ggplot2")
 library("ggpubr")
 library("ggsci")
-library("forplo")
 
 regression_table <- read.csv("metadata_table_cleaned_for_regression_analysis.csv")
 regression_table <- regression_table %>% mutate(Pathological.Response=ifelse(Pathological.Response=="MPR", 1, 0))
@@ -94,14 +93,77 @@ LUSC.LUAD.overall.log <- glm(Pathological.Response ~ Age + Gender + issmoke + Pl
                                            grouped_staging, data=regression_table, family=binomial) 
 
 
+summary(LUSC.LUAD.overall.log)
+#LUSC.LUAD.result<-autoReg(LUSC.LUAD.overall.log,uni=TRUE,multi=TRUE, threshold=0.01)
+#LUSC.LUAD.result %>% myft()
+
+#myplot <- modelPlot(LUSC.LUAD.overall.log, uni=TRUE, show.ref = TRUE, threshold=0.01,   change.pointsize = T)
+#myplot$p <- myplot$p + scale_fill_nejm() + scale_color_nejm()
+#myplot
+
+
 #summary(LUSC.LUAD.overall.log)
-LUSC.LUAD.result<-autoReg(LUSC.LUAD.overall.log,uni=TRUE,multi=TRUE, threshold=0.01)
+LUSC.LUAD.result<-autoReg(LUSC.LUAD.overall.log,uni=TRUE,multi=FALSE, threshold=0.01)
 LUSC.LUAD.result %>% myft()
 
-myplot <- modelPlot(LUSC.LUAD.overall.log, uni=TRUE, show.ref = TRUE, threshold=0.01,   change.pointsize = T)
-myplot$p <- myplot$p + scale_fill_nejm() + scale_color_nejm()
+myplot <- modelPlot(LUSC.LUAD.overall.log, uni=TRUE, multi=FALSE, show.ref = TRUE, threshold=0.01,   change.pointsize = T)
 myplot
+#myplot$p <- myplot$p + scale_fill_nejm() + scale_color_nejm()
+#myplot
+
 ggsave("metadata_regression_analysis.pdf")
 ```
 
+
+```{r}
+#========
+LUSC.overall.log <- glm(Pathological.Response ~ Age + Gender + issmoke + Platinum +
+                                           Cycles + center + PD1 + before_N + second_chemotherapy +
+                                           grouped_staging, data=LUSC.regression_table, family=binomial) 
+
+
+summary(LUSC.overall.log)
+LUSC.result<-autoReg(LUSC.overall.log,uni=TRUE,multi=TRUE,threshold=0.1)
+LUSC.result
+```
+
+
+```{r}
+#=====
+
+LUAD.overall.log <- glm(Pathological.Response ~ Age + Gender + issmoke + Platinum +
+                                           Cycles + center + PD1 + before_N + second_chemotherapy +
+                                           grouped_staging, data=LUAD.regression_table, family=binomial) 
+
+summary(LUAD.overall.log)
+LUAD.result<-autoReg(LUAD.overall.log,uni=TRUE,multi=TRUE,threshold=0.1)
+LUAD.result
+```
+
+#===== analyze PDL1 only
+```{r}
+LUSC.PDL1.log <- glm(Pathological.Response ~ PD.L1TPS, data=LUSC.regression_table, family=binomial) 
+
+
+summary(LUSC.PDL1.log)
+LUSC.PDL1.result<-autoReg(LUSC.PDL1.log,uni=TRUE, multi=FALSE, threshold=1)
+LUSC.PDL1.result
+
+myplot <- modelPlot(LUSC.PDL1.log, uni=TRUE, show.ref = TRUE, multi=FALSE, threshold=1,   change.pointsize = T)
+myplot
+ggsave("LUSC_PD-L1_regression_analysis.pdf")
+```
+
+
+```{r}
+LUAD.PDL1.log <- glm(Pathological.Response ~ PD.L1TPS, data=LUAD.regression_table, family=binomial) 
+
+summary(LUAD.PDL1.log)
+LUAD.PDL1.result<-autoReg(LUAD.PDL1.log,uni=TRUE, multi=FALSE, threshold=1)
+LUAD.PDL1.result
+
+myplot <- modelPlot(LUAD.PDL1.log, uni=TRUE, show.ref = TRUE, multi=FALSE, threshold=1,   change.pointsize = T)
+myplot
+ggsave("LUAD_PD-L1_regression.pdf", height = 5, width = 15)
+```
 
