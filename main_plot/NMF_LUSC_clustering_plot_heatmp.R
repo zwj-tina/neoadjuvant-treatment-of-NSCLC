@@ -5,9 +5,9 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 ###################################################################
-info <- read.csv("../main_data/all_sub_cell_type.csv")
+# read info, columns include cellID sampleID sub_cell_type
+#info <- read.csv("../main_data/all_sub_cell_type.csv")
 head(info)
-length(unique(info$sampleID))
 
 df <- table(info$sampleID,info$sub_cell_type)
 ratio <- as.data.frame(df / rowSums(df))
@@ -43,7 +43,6 @@ for(each in sample.info$pathological_response){
     pathological_response <- c(pathological_response, "non-MPR")
   }
 }
-
 sample.info$pathological_response <- pathological_response
 
 response.meta <- sample.info[, c("sampleID","smoking_history","cancer_type","pre_treatment_staging",
@@ -57,7 +56,7 @@ ratio <- dcast(ratio, sampleID ~ ratio$cell.type, value.var = "Freq")
 
 merge.version <- merge(ratio, response.meta, by = "sampleID", all.x = TRUE)
 head(merge.version)
-dim(merge.version)
+
 #only include LUSC
 merge.version <- merge.version[merge.version$cancer_type %in% c("LUSC"),]
 dim(merge.version)
@@ -82,18 +81,14 @@ scale_ratio <- t(scale_ratio)
 head(scale_ratio)
 dim(scale_ratio)
 
-
 #select the optimal rank k
 #ranks <- 2:10
 #estim.coad <- nmf(scale_ratio, ranks, nrun=100)
 #plot(estim.coad)
 
-#ggline(estim.coad$measures,x="rank",y="cophenetic") + ylim(0.9,1)
-
-#NMF,use the optimal rank=5
+#NMF, use the optimal rank=5
 seed = 2020820
 
-ratio <- t(ratio)
 nmf.rank5 <- nmf(scale_ratio, 
                  rank = 5, 
                  nrun=200,
