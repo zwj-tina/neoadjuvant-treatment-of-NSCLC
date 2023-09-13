@@ -1,5 +1,5 @@
 # select expanded TCRs
-all.tcr.table <- read_csv("/home/zhangwj/data_yi/neoadjuvant/data/scRNA_h5ad_S/T_with_TCR_obs_V3.csv")
+all.tcr.table <- read_csv("T_with_TCR_obs_V3.csv")
 all.tcr.table 
 
 unique.tcr <- unique(all.tcr.table$clonetype)
