@@ -94,7 +94,6 @@ dim(scale_ratio)
 #NMF,use the optimal rank=5
 seed = 2020820
 
-ratio <- t(ratio)
 nmf.rank5 <- nmf(scale_ratio, 
                  rank = 5, 
                  nrun= 200,
