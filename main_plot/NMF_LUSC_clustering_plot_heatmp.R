@@ -90,7 +90,7 @@ dim(scale_ratio)
 
 #ggline(estim.coad$measures,x="rank",y="cophenetic") + ylim(0.9,1)
 
-#再次NMF,rank=5
+#NMF,use the optimal rank=5
 seed = 2020820
 
 ratio <- t(ratio)
