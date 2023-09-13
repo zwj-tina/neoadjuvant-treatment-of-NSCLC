@@ -89,7 +89,6 @@ dim(scale_ratio)
 #plot(estim.coad)
 
 #ggline(estim.coad$measures,x="rank",y="cophenetic") + ylim(0.9,1)
-#ggsave("/home/zhangwj/data_yi/neoadjuvant/figure/LUSC/LUSC_NMF_cophenetic.pdf",width = 4.5, height = 3.5)
 
 #再次NMF,rank=5
 seed = 2020820
