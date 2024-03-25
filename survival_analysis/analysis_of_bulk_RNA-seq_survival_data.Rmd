@@ -1,0 +1,180 @@
+```{r}
+library(matrixStats)
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(survival)
+library(ggsurvfit)
+library(survminer)
+```
+
+# OAK study
+```{r}
+OAK.meta <- read.csv("Genetech/EGAF00005797822/go28915_anon_subsetted_BYN_n699.csv")
+#dim(OAK.meta)
+#head(OAK.meta)
+
+OAK <- read.csv("Genetech/EGAF00005797824/anonymized_OAK-TPMs2.csv")
+dim(OAK)
+colnames(OAK) <- sapply(colnames(OAK), function(x) str_split(x, "[.]")[[1]][2])
+OAK[1:10,1:10]
+
+OAK.meta$sample <- colnames(OAK)
+
+OAK <- t(t(OAK) / rowSums(t(OAK)) * 1000000)
+#OAK
+#colSums(OAK)
+
+OAK.meta.ICI <- OAK.meta %>% filter(ACTARM=="MPDL3280A" & HIST=="NON-SQUAMOUS")
+ICI.sampleID <- OAK.meta.ICI$sample
+OAK.ICI <- OAK[, ICI.sampleID]
+
+OAK.ICI.z.scored <- (OAK.ICI - rowMeans(OAK.ICI) ) / rowSds(OAK.ICI) 
+
+```
+## validating PD1 vs chemo
+```{r}
+fit.data <- OAK.meta
+fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$ACTARM, data = fit.data)
+summary(fit.cox)
+
+fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$ACTARM, data = fit.data)
+print(fit)
+
+p <- ggsurvplot(fit,
+          pval = TRUE, conf.int = FALSE,
+          risk.table = TRUE, # Add risk table
+          risk.table.col = "strata", # Change risk table color by groups
+          linetype = "strata", # Change line type by groups
+          #surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_classic(), # Change ggplot2 theme
+          risk.table.pos = "in",
+          xlab = "Months from surgery",
+          title = "",
+          palette = c("#00C598", "#C9EFE8","#9FDC98", "#24A07E")
+)
+p
+
+
+## PFS
+fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$PFS_CENSOR) ~ fit.data$ACTARM, data = fit.data)
+summary(fit.cox)
+
+fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$PFS_CENSOR) ~ fit.data$ACTARM, data = fit.data)
+print(fit)
+
+p <- ggsurvplot(fit,
+          pval = TRUE, conf.int = FALSE,
+          risk.table = TRUE, # Add risk table
+          risk.table.col = "strata", # Change risk table color by groups
+          linetype = "strata", # Change line type by groups
+          #surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_classic(), # Change ggplot2 theme
+          risk.table.pos = "in",
+          xlab = "Months from surgery",
+          title = "",
+          palette = c("#00C598", "#C9EFE8","#9FDC98", "#24A07E")
+)
+p
+
+```
+
+
+## signature approach
+```{r}
+b.cell.signature <- c("CD79A", "FCRL4")
+treg.signature <- c("FOXP3", "CCR8")
+texp.signature <- c("CD8A","GZMK","NR4A1","ZNF683", "TCF7")
+
+
+fit.data <- OAK.meta.ICI %>% mutate(
+  b.cell.signature=colSums(OAK.ICI.z.scored[b.cell.signature,]),
+  treg.signature=colSums(OAK.ICI.z.scored[treg.signature,]),
+  texp.signature=colSums(OAK.ICI.z.scored[texp.signature,]),
+) %>% mutate(
+  treg.texp=ifelse(treg.signature>=texp.signature, "treg>texp", "treg<texp"),
+  b.cell.signature=ifelse(b.cell.signature<median(b.cell.signature), "low", "high"),
+  texp.signature=ifelse(texp.signature<median(texp.signature), "low", "high"),
+)
+
+# fit.data
+```
+
+### b.cell
+```{r}
+fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$b.cell.signature, data = fit.data)
+summary(fit.cox)
+
+fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$b.cell.signature, data = fit.data)
+print(fit)
+
+p <- ggsurvplot(fit,
+          pval = TRUE, conf.int = FALSE,
+          risk.table = TRUE, # Add risk table
+          risk.table.col = "strata", # Change risk table color by groups
+          linetype = "solid", # Change line type by groups
+          #surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_classic(), # Change ggplot2 theme
+          risk.table.pos = "in",
+          xlab = "Months",
+          ylab = "Overall survival",
+          title = "",
+          palette = c("#077E64","#878586")
+)
+p
+
+ggsave("bulk_data_plots/OAK_dataset_b.cell.signature.pdf", width = 8, height = 6)
+```
+
+
+### texp
+```{r}
+fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$texp.signature, data = fit.data)
+summary(fit.cox)
+
+fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$texp.signature, data = fit.data)
+print(fit)
+
+p <- ggsurvplot(fit,
+          pval = TRUE, conf.int = FALSE,
+          risk.table = TRUE, # Add risk table
+          risk.table.col = "strata", # Change risk table color by groups
+          linetype = "solid", # Change line type by groups
+          #surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_classic(), # Change ggplot2 theme
+          risk.table.pos = "in",
+          xlab = "Months",
+          ylab = "Overall survival",
+          title = "",
+          palette = c("#077E64","#878586")
+)
+p
+
+ggsave("bulk_data_plots/OAK_dataset_texp.signature.pdf", width = 8, height = 6)
+```
+### tregtexp
+```{r}
+fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$treg.texp, data = fit.data)
+summary(fit.cox)
+
+fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$treg.texp, data = fit.data)
+print(fit)
+
+p <- ggsurvplot(fit,
+          pval = TRUE, conf.int = FALSE,
+          risk.table = TRUE, # Add risk table
+          risk.table.col = "strata", # Change risk table color by groups
+          linetype = "solid", # Change line type by groups
+          #surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_classic(), # Change ggplot2 theme
+          risk.table.pos = "in",
+          xlab = "Months",
+          ylab = "Overall survival",
+          title = "",
+          palette = c("#077E64","#878586")
+)
+p
+
+ggsave("bulk_data_plots/OAK_dataset_treg_compared_with_texp.pdf", width = 8, height = 6)
+```
+
