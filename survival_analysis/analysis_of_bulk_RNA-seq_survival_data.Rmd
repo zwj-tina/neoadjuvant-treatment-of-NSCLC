@@ -88,11 +88,9 @@ texp.signature <- c("CD8A","GZMK","NR4A1","ZNF683", "TCF7")
 
 
 fit.data <- OAK.meta.ICI %>% mutate(
-  b.cell.signature=colSums(OAK.ICI.z.scored[b.cell.signature,]),
-  treg.signature=colSums(OAK.ICI.z.scored[treg.signature,]),
-  texp.signature=colSums(OAK.ICI.z.scored[texp.signature,]),
+  b.cell.signature=colMeans2(OAK.ICI.z.scored[b.cell.signature,]),
+  texp.signature=colMeans2(OAK.ICI.z.scored[texp.signature,]),
 ) %>% mutate(
-  treg.texp=ifelse(treg.signature>=texp.signature, "treg>texp", "treg<texp"),
   b.cell.signature=ifelse(b.cell.signature<median(b.cell.signature), "low", "high"),
   texp.signature=ifelse(texp.signature<median(texp.signature), "low", "high"),
 )
@@ -123,7 +121,7 @@ p <- ggsurvplot(fit,
 )
 p
 
-ggsave("bulk_data_plots/OAK_dataset_b.cell.signature.pdf", width = 8, height = 6)
+#ggsave("bulk_data_plots/OAK_dataset_b.cell.signature.pdf", width = 8, height = 6)
 ```
 
 
@@ -150,31 +148,7 @@ p <- ggsurvplot(fit,
 )
 p
 
-ggsave("bulk_data_plots/OAK_dataset_texp.signature.pdf", width = 8, height = 6)
+# ggsave("bulk_data_plots/OAK_dataset_texp.signature.pdf", width = 8, height = 6)
 ```
-### tregtexp
-```{r}
-fit.cox <- coxph(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$treg.texp, data = fit.data)
-summary(fit.cox)
 
-fit <- survfit(Surv(fit.data$OS_MONTHS, fit.data$OS_CENSOR) ~ fit.data$treg.texp, data = fit.data)
-print(fit)
-
-p <- ggsurvplot(fit,
-          pval = TRUE, conf.int = FALSE,
-          risk.table = TRUE, # Add risk table
-          risk.table.col = "strata", # Change risk table color by groups
-          linetype = "solid", # Change line type by groups
-          #surv.median.line = "hv", # Specify median survival
-          ggtheme = theme_classic(), # Change ggplot2 theme
-          risk.table.pos = "in",
-          xlab = "Months",
-          ylab = "Overall survival",
-          title = "",
-          palette = c("#077E64","#878586")
-)
-p
-
-ggsave("bulk_data_plots/OAK_dataset_treg_compared_with_texp.pdf", width = 8, height = 6)
-```
 
