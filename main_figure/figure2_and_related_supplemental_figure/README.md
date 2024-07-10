@@ -7,4 +7,4 @@ used to generate the NMF figrues in Figure 2A
 used to generate the figures in Supplemental Figure S3 and S4 to validate the robustness of NMF
 
 ## proportion_plot.R
-used to plot the proportion of each module or each cell type in all CD45+ immune cells
+used to plot the proportion of each module or each cell type in all CD45+ immune cells, and some basic information like PD-L1,radiological_response and pathological response
