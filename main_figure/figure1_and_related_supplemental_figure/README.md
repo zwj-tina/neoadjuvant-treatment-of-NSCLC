@@ -7,4 +7,4 @@ used to generate the forest plot in Supplemental Figure S1
 used to generate the figure for consistency assessment of MPR in Supplemental Figure S1
 
 ## metadata analysis
-used to generate the waterwall plot in Figure 1, as well as calculating pCR and MPR rates.
+used to generate the waterfall plot in Figure 1, as well as calculating pCR and MPR rates.
