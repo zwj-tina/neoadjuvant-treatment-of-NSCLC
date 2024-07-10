@@ -1,6 +1,6 @@
 # file description
 
-## fig2A_all_NMF.R
+## NMF.R
 used to generate the NMF figrues in Figure 2A
 
 ## robustness_of_NMF.R
