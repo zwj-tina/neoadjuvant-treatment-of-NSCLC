@@ -1,0 +1,126 @@
+```{r}
+library(reshape2)
+library(RColorBrewer)
+assess <- read.csv("assessment.csv", sep=',', row.names = 1)
+```
+
+
+```{r}
+p1 <- ggplot(assess, aes(x=SPH, y=CICAMS)) +
+  geom_point() + 
+  stat_cor(data=assess, method = "pearson", na.rm = TRUE) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_hline(yintercept = 90, linetype="dotted") + 
+  geom_vline(xintercept = 90, linetype="dotted") + 
+#  geom_text(aes(SPH,CICAMS,label=rownames(assess))) +
+  coord_fixed() + theme_bw() +
+  xlab("SPH") +
+  ylab("CICAMS") +
+  ggtitle("Pathological assessment CICAMS vs SPH")
+
+
+
+p2 <- ggplot(assess, aes(x=CICAMS, y=GDPH)) +
+  geom_point() + 
+  stat_cor(data=assess, method = "pearson", na.rm = TRUE) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_hline(yintercept = 90, linetype="dotted") + 
+  geom_vline(xintercept = 90, linetype="dotted") + 
+#  geom_text(aes(CICAMS,GDPH,label=rownames(assess))) + 
+  coord_fixed() + theme_bw() +
+  xlab("CICAMS") +
+  ylab("GDPH") +
+  ggtitle("Pathological assessment GDPH vs CICAMS")
+
+
+p3 <- ggplot(assess, aes(x=GDPH, y=SPH)) +
+  geom_point() + 
+  stat_cor(data=assess, method = "pearson", na.rm = TRUE) + 
+  geom_abline(intercept = 0, slope = 1) +
+  geom_hline(yintercept = 90, linetype="dotted") + 
+  geom_vline(xintercept = 90, linetype="dotted") + 
+#  geom_text(aes(GDPH,SPH,label=rownames(assess))) + 
+  coord_fixed() + theme_bw() +
+  xlab("GDPH") +
+  ylab("SPH") +
+  ggtitle("Pathological assessment SPH vs GDPH")
+
+
+p <- p1+p2+p3
+ggsave(p,filename = "assessment_new.png",height = 10,width = 30)
+```
+
+```{r}
+type_prr <- function(prr){
+  if (is.na(prr)){
+    return (NA)
+  }
+  else if (as.numeric(prr)>=90){
+    return("RVT≤10%")
+  }
+  else{
+    return("RVT>10%")
+  }
+}
+# assess <- assess %>% add_column(CICAMS = NA, SPH = NA, GDPH = NA)
+for (name in row.names(assess)){
+  assess[name,]['CICAMS'] <- type_prr(assess[name,]$CICAMS)
+  assess[name,]['SPH'] <- type_prr(assess[name,]$SPH)
+  assess[name,]['GDPH'] <- type_prr(assess[name,]$GDPH)
+}
+```
+
+```{r}
+c = order(as.numeric(gsub("P","",row.names(assess))))
+assess_prr <- assess[c,][,c(1:4)]
+assess_prr <- rbind(assess_prr[which(assess_prr$histology=="LUAD"),],assess_prr[which(assess_prr$histology=="LUSC"),])
+assess2 <- melt(assess_prr %>% add_column(patient = row.names(assess_prr)),id="patient")
+head(assess2)
+assess2$patient=factor(assess2$patient, levels=row.names(assess_prr))
+assess2$variable=factor(assess2$variable,levels = c("histology","CICAMS","SPH","GDPH"))
+#mycolors <- 
+p4 <- assess2%>%ggplot(aes(x=patient,y=variable))+
+  geom_tile(aes(fill=value),color="white",size=1)+
+  scale_x_discrete("",expand = c(0,0))+ 
+  scale_y_discrete("",expand = c(0,0))+
+  xlab("Patient")+
+  theme(# axis.text.x.bottom = element_text(size=10,angle=-45,hjust=0,vjust=0.5),
+        axis.text.y.left = element_text(size=10),
+        axis.text.x=element_blank(), 
+        axis.title.x=element_text(size=10), 
+        axis.ticks.x=element_blank()
+        #axis.text.x = element_text(size=2)
+        )+
+  scale_fill_brewer(palette = "Paired")
+p4
+ggsave("tile_new.png",width = 30,height = 8,units = "cm")
+```
+
+
+```{r}
+# Filter bad stainings
+c = order(as.numeric(gsub("P","",row.names(assess))))
+assess_prr <- assess[c,][which(assess$notes==""),][,c(1:4)]
+assess_prr <- rbind(assess_prr[which(assess_prr$histology=="LUAD"),],assess_prr[which(assess_prr$histology=="LUSC"),])
+assess2 <- melt(assess_prr %>% add_column(patient = row.names(assess_prr)),id="patient")
+head(assess2)
+assess2$patient=factor(assess2$patient, levels=row.names(assess_prr))
+assess2$variable=factor(assess2$variable,levels = c("histology","CICAMS","SPH","GDPH"))
+#mycolors <- 
+p5 <- assess2%>%ggplot(aes(x=patient,y=variable))+
+  geom_tile(aes(fill=value),color="white",size=1)+
+  scale_x_discrete("",expand = c(0,0))+ 
+  scale_y_discrete("",expand = c(0,0))+
+  xlab("Patient")+
+  theme(# axis.text.x.bottom = element_text(size=10,angle=-45,hjust=0,vjust=0.5),
+        axis.text.y.left = element_text(size=10),
+        axis.text.x=element_blank(), 
+        axis.title.x=element_text(size=10), 
+        axis.ticks.x=element_blank()
+        #axis.text.x = element_text(size=2)
+        )+
+  scale_fill_brewer(palette = "Paired")
+p5
+ggsave("tile_new_filtered.png",width = 30,height = 8,units = "cm")
+```
+
