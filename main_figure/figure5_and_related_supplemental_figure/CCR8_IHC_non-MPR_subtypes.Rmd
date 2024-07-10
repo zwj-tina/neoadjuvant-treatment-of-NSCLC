@@ -1,0 +1,65 @@
+```{r}
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(survival)
+library(ggsurvfit)
+library(survminer)
+```
+
+```{r}
+nmf.data <- read_csv("clean_nmf_data.csv")
+ccr8.data <- read_excel("CCR8IHC.xlsm") %>% filter(SampleID != "P189") %>% left_join(nmf.data, by="SampleID") %>% filter((MPR=="non-MPR"), !is.na(numberTregClone)) %>% mutate(TCR.classification=ifelse(numberTregClone>=9, "type I non-MPR", "type II non-MPR"))
+ccr8.data
+
+table(ccr8.data$TCR.classification)
+```
+
+```{r}
+ccr8.data %>% group_by(TCR.classification) %>% count(group)
+```
+
+
+
+```{r}
+compaired <- list(c("type I non-MPR", "type II non-MPR"))
+
+ggboxplot(ccr8.data, x = "TCR.classification", y = "number.CCR8.cells",
+          color = "TCR.classification",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='TCR.classification', y= 'number of CCR8+ Cells per mm2') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("type I non-MPR"="#8CB4A3","type II non-MPR"="#7998AD")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+ggsave("number.CCR8.cells.pdf", width = 2.5, height = 3.5)
+
+ggboxplot(ccr8.data, x = "TCR.classification", y = "number.IC",
+          color = "TCR.classification",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='TCR.classification', y= 'number of immune Cells per mm2') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("type I non-MPR"="#8CB4A3","type II non-MPR"="#7998AD")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+ggsave("number.immune.cells.pdf", width = 2.5, height = 3.5)
+
+ggboxplot(ccr8.data, x = "TCR.classification", y = "percentage.CCR8.IC",
+          color = "TCR.classification",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='TCR.classification', y= 'proportion of CCR8+ cells in immune Cells') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("type I non-MPR"="#8CB4A3","type II non-MPR"="#7998AD")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+ggsave("proportion.CCR8.cells.pdf", width = 2.5, height = 3.5)
+
+ggboxplot(ccr8.data, x = "TCR.classification", y = "percentage.CCR8.IC",
+          color = "TCR.classification",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='TCR.classification', y= 'proportion of CCR8+ cells in immune Cells') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("type I non-MPR"="#8CB4A3","type II non-MPR"="#7998AD")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+
+
+ggplot(ccr8.data %>% mutate(value=1), aes(fill=as.factor(group), y=value, x=TCR.classification)) + 
+    geom_bar(position="stack", stat="identity") + scale_fill_manual(values=c("#4DBBD5", "#00A087", "3C5488", "#F39B7F")) + theme_classic()
+
+ggsave("CCR8.IHC.patient.number.pdf", width = 3, height = 4)
+```
+
