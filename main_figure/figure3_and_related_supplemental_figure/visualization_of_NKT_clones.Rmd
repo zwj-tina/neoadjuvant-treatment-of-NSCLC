@@ -1,0 +1,135 @@
+# P107 plot
+coerced.cell.types <- c("CD8T_Tem_GZMK+GZMH+", "CD4T_Tfh_CXCL13", "CD4T_Tm_XCL1",
+                        "CD4T_Tem_GZMA", "ILC3_KIT", "CD8T_Trm_ZNF683", "CD8T_prf_MKI67",
+                        "CD4T_Tm_ANXA1", "CD8T_MAIT_KLRB1", "CD4T_Tn_CCR7", 
+                        "CD4T_Treg_MKI67", "CD8T_Tem_GZMK+NR4A1+", "CD8T_Tm_IL7R",
+                        "T_gdT_TRDV2", "T_gdT_TRDV1", "NK_CD16hi_FGFBP2",
+                        "CD4T_Th1-like_CXCL13")
+
+color.value <- c(
+  "expanded_terminal_Tex"="#004949",
+  "Expanded CCR8+Treg"="#A50021",
+  "other"="#BCBCBC",
+  "CD8Texp"="#418849",
+  "CD8T_NK-like_FGFBP2"="#6551CC"
+)
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P107")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P107")
+p
+ggsave("figures/P107_clonal_composition.pdf", p, width = 10, height =5)
+
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P471")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P471")
+p
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P325")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P325")
+p
+
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P23")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P23")
+p
+
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P258")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P258")
+p
+ggsave("figures/P258_clonal_composition.pdf", p, width = 10, height =5)
+
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P365")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P365")
+p
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P412")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P412")
+p
+
+ggsave("figures/P412_clonal_composition.pdf", p, width = 10, height =5)
+
+tcr.table <- expanded.tcr.table %>% filter(sampleID=="P59")
+
+tcr.count.table <- as.data.frame(table(tcr.table$clonetype)) %>% arrange(desc(Freq))
+  x.orders <- as.vector(tcr.count.table$Var1)
+  by.cell.type.count.table <- tcr.table %>% group_by(clonetype, T_new_name) %>% summarise(n=n())
+  by.cell.type.count.table$T_new_name <- factor(by.cell.type.count.table$T_new_name, levels = c("expanded_terminal_Tex", "CD8Texp", "Expanded CCR8+Treg", "CD8T_NK-like_FGFBP2",  "other"))
+  p <- ggplot(by.cell.type.count.table, 
+              aes(x=factor(clonetype, level=x.orders), fill=T_new_name, y=n)) + 
+    theme_classic() + 
+    scale_fill_manual(values = color.value) +
+    geom_bar(position="stack", stat="identity") + theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle("P59")
+p
