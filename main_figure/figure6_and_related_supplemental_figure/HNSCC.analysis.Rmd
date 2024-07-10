@@ -1,0 +1,116 @@
+```{r}
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(survival)
+library(ggsurvfit)
+library(survminer)
+```
+
+```{r}
+HNSCC.meta <- read_csv("HNSCC.meta.csv")
+
+HNSCC.data <- read_csv("HNSCC.T_with_TCR_harmony.csv") 
+HNSCC.data
+HNSCC.post <- HNSCC.data %>% filter(state=="post-Tx") %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.post
+```
+
+```{r}
+HNSCC.post.summary <- HNSCC.post %>% filter(T_new_name %in% c("Texp", "expanded terminal Tex")) %>% group_by(patientID, T_new_name) %>% summarise(n=n()) %>%
+  mutate(freq = n / sum(n)) %>% filter(T_new_name=="Texp") %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.post.summary
+
+ggboxplot(HNSCC.post.summary, x = "RFS_event", y ="Pathological response %" ,
+          color = "RFS_event",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='RFS_event', y= 'PRR') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + scale_color_manual(values=c("yes"="#C6595A","no"="#878586")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+
+ggsave("HNSCC.RFS.PRR.pdf", width = 2.5, height = 3.5)
+```
+
+
+```{r}
+# plot texp in association with RFS
+HNSCC.post.summary <- HNSCC.post %>% filter(T_new_name %in% c("Texp", "expanded terminal Tex")) %>% group_by(patientID, T_new_name) %>% summarise(n=n()) %>%
+  mutate(freq = n / sum(n)) %>% filter(T_new_name=="Texp") %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.post.summary
+
+compaired <- list(c("yes", "no"))
+
+ggboxplot(HNSCC.post.summary, x = "RFS_event", y = "freq",
+          color = "RFS_event",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='RFS_event', y= 'Texp in tex-relevant cells') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + scale_color_manual(values=c("yes"="#C6595A","no"="#878586")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+ggsave("HNSCC.RFS.Texp.pdf", width = 2.5, height = 3.5)
+
+
+```
+
+
+
+```{r}
+# plot treg in association with RFS
+HNSCC.post.summary <- HNSCC.post %>% filter(majority_voting %in% c("CD4T_Treg_CCR8", "CD4T_Treg_FOXP3", "CD4T_Treg_MKI67")) %>% group_by(patientID, majority_voting) %>% summarise(n=n()) %>%
+  mutate(freq = n / sum(n)) %>% filter(majority_voting=="CD4T_Treg_CCR8") %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.post.summary
+
+compaired <- list(c("yes", "no"))
+
+ggboxplot(HNSCC.post.summary, x = "RFS_event", y = "freq",
+          color = "RFS_event",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='RFS_event', y= 'Texp in tex-relevant cells') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + scale_color_manual(values=c("yes"="#C6595A","no"="#878586")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+#ggsave("HNSCC.RFS.Texp.pdf", width = 2.5, height = 3.5)
+```
+
+```{r}
+# plot treg in association with MPR
+HNSCC.post.summary <- HNSCC.post %>% filter(majority_voting %in% c("CD4T_Treg_CCR8", "CD4T_Treg_FOXP3", "CD4T_Treg_MKI67")) %>% group_by(patientID, majority_voting) %>% summarise(n=n()) %>%
+  mutate(freq = n / sum(n)) %>% filter(majority_voting=="CD4T_Treg_CCR8") %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.post.summary
+
+compaired <- list(c("yes", "no"))
+
+ggboxplot(HNSCC.post.summary, x = "PRR.cat", y = "freq",
+          color = "PRR.cat",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='PRR.cat', y= 'CCR8 Treg in all Tregs') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + scale_color_manual(values=c("yes"="#C6595A","no"="#878586")) + theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1))
+#ggsave("HNSCC.RFS.Texp.pdf", width = 2.5, height = 3.5)
+```
+
+```{r}
+# plot treg in correlation with terminal Tex
+HNSCC.post.summary <- HNSCC.post %>% filter(majority_voting %in% c("CD8T_terminal_Tex_LAYN", "CD4T_Treg_CCR8"), clononumber>=3) %>% group_by(patientID, majority_voting) %>% summarise(n=n_distinct(clonotype))
+HNSCC.post.summary
+#ggsave("HNSCC.RFS.Texp.pdf", width = 2.5, height = 3.5)
+
+HNSCC.Treg.summary <- HNSCC.post.summary %>% filter(majority_voting=="CD4T_Treg_CCR8")
+colnames(HNSCC.Treg.summary)[3] <- "numberTregClone"
+HNSCC.Treg.summary
+HNSCC.Tex.summary <- HNSCC.post.summary %>% filter(majority_voting=="CD8T_terminal_Tex_LAYN")
+colnames(HNSCC.Tex.summary)[3] <- "numberTexClone"
+HNSCC.Clone.summary <- HNSCC.Tex.summary %>% left_join(HNSCC.Treg.summary %>% dplyr::select(patientID, numberTregClone), by="patientID") %>% mutate(numberTregClone=ifelse(is.na(numberTregClone), 0, numberTregClone)) %>% left_join(HNSCC.meta, by="patientID")
+HNSCC.Clone.summary
+
+
+ggplot(HNSCC.Clone.summary, aes(x=numberTexClone, y=numberTregClone, color=MPR)) + geom_point() + theme_classic() + coord_equal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
