@@ -1,0 +1,27 @@
+ccr8.ihc <- read_csv("CCR8_IF.csv") %>% mutate(group=as.character(group))
+
+compaired <- list(c("3", "4"))
+
+ggboxplot(ccr8.ihc, x = "group", y = "FOXP3.area",
+          color = "group",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='group', y= 'number of FOXP3+ Cells per mm2') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("3"="#00A289","4"="#3C5487"))
+ggsave("number.FOXP3.pdf", width = 2.5, height = 3.5)
+
+ggboxplot(ccr8.ihc, x = "group", y = "CCR8.area",
+          color = "group",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='group', y= 'number of FOXP3+CCR8+ Cells per mm2') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("3"="#00A289","4"="#3C5487"))
+ggsave("number.CCR8.pdf", width = 2.5, height = 3.5)
+
+ggboxplot(ccr8.ihc, x = "group", y = "CCR8.FOXP3",
+          color = "group",add="jitter",add.params=list(size=0.5),
+          x.text.angle=0) + labs(x='group', y= 'percentage of FOXP3+CCR8+ Cells in FOXP3+ cells') +
+  theme(legend.position="none") +
+  geom_signif(comparisons = compaired,step_increase = 0.1,map_signif_level = F,test = wilcox.test) + 
+  scale_color_manual(values=c("3"="#00A289","4"="#3C5487"))
+ggsave("CCR8.FOXP3.pdf", width = 2.5, height = 3.5)
