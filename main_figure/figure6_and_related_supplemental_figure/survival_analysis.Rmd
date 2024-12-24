@@ -633,14 +633,14 @@ pdf("final_plots/non-MPR.patients.ROC.pdf",         # File name
     width = 5, height = 5, # Width and height in inches
     bg = "white",    # Color model (cmyk is required for most publications)
     paper = "A4")  
-fit.data <- fit.data %>% filter(!is.na(Texp.in.Tex.relevant))
+fit.data <- fit.data %>% filter(!is.na(Texp.in.Tex.relevant),MPR=="non-MPR")
 fit.cox <- coxph(Surv(fit.data$RFS_months_new, fit.data$RFS_status_new) ~  fit.data$Texp.in.Tex.relevant, data = fit.data)
 PI<-fit.cox$linear.predictor
 tROC.hf.texp <-risksetROC(Stime=fit.data$RFS_months_new,status=fit.data$RFS_status_new,marker=PI, predict.time = median(fit.data$RFS_months), method="Cox",col="#418849",lty=1,lwd=1, xlab="FP:1-Specificity",ylab="TP:sensitivity",main="Time Dependent ROC")
 #tROC.hf.texp$AUC
 
 
-fit.data <- fit.data %>% filter(!is.na(Texp.in.Tex.relevant))
+fit.data <- fit.data %>% filter(!is.na(Texp.in.Tex.relevant),MPR=="non-MPR")
 fit.cox <- coxph(Surv(fit.data$RFS_months_new, fit.data$RFS_status_new) ~  fit.data$PRR, data = fit.data)
 PI<-fit.cox$linear.predictor
 tROC.hf.prr <-risksetROC(Stime=fit.data$RFS_months_new,status=fit.data$RFS_status_new,marker=PI, predict.time = median(fit.data$RFS_months), method="Cox",col="blue",lty=1,lwd=1, xlab="FP:1-Specificity",ylab="TP:sensitivity",main="Time Dependent ROC")
